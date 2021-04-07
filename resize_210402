@@ -1,0 +1,59 @@
+// This macro resizes an image collected with a 60x objective (having a pixel size of ~130 nm) to
+// a simulation of an image collected on a 20x objective (having a pixel size of ~500 nm).
+// This is so we can leverage the MESMER segmentation tool (https://www.biorxiv.org/content/10.1101/2021.03.01.431313v2)
+// with our data which was acquired using a much higher resolution.
+
+
+
+// Get the directory where images live
+dir1 = getDirectory("Choose Source Directory of Nuclei ");
+dir2 = getDirectory("Choose Source Directory of Cells ");
+dir3 = getDirectory("Choose Destination Directory ");
+
+list1 = getFileList(dir1);
+list2 = getFileList(dir2);
+
+
+setBatchMode(true);
+
+for (i=0; i<list1.length; i++)
+//for (i=0; i<3; i++)
+{
+	// Print the name of everything in this input folder
+	//print(list1[i]);
+
+	// Only process the files that have a ".tif" or ".tiff" extension
+	if( (indexOf(list1[i],".tif") != -1) || (indexOf(list1[i],".TIF") != -1))
+	{
+		// Open the .tif or .tiff file
+		open(dir1+list1[i]);
+		print(list1[i]);
+		rename("image1");
+
+		for(j=0; j<list2.length; j++)
+		{
+			if( (indexOf(substring(list1[i],3),substring(list2[j],3)) != -1))
+			{
+				//print("Found match");
+				//print(list1[i]);
+				//print(list2[j]);
+
+				open(dir2+list2[j]);
+				print(list2[j]);
+				rename("image2");
+
+				run("Merge Channels...", "c2=[image1] c6=[image2] create ignore");
+
+				run("Size...", "width=270 height=270 depth=23 constrain average interpolation=Bilinear");
+
+				imgName = "mesmer"+ substring(list1[i],2);
+				saveAs("Tiff", dir3+imgName);
+				close();
+			}
+		}
+
+	}
+
+}
+
+setBatchMode(false);
